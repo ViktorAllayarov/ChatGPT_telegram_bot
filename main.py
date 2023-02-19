@@ -5,11 +5,11 @@ import telebot
 from requests.exceptions import ReadTimeout
 
 env = {
-    **dotenv_values("/home/ChatGPT_telegram_bot/.env.prod"),
+    **dotenv_values(".env.prod"),
     **dotenv_values(".env.dev"),  # override
 }
 
-API_KEYS_CHATGPT = [env["API_KEY_CHATGPT"], env["API_KEY_CHATGPT_1"]]
+API_KEYS_CHATGPT = [env["API_KEY_CHATGPT"]]
 bot = telebot.TeleBot(env["TG_BOT_TOKEN"])
 db_link = env["DB_LINK"]
 
