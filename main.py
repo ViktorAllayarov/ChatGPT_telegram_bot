@@ -9,7 +9,18 @@ env = {
     **dotenv_values(".env.dev"),  # override
 }
 
-API_KEYS_CHATGPT = [env["API_KEY_CHATGPT"]]
+API_KEYS_CHATGPT = [
+    env["API_KEY_CHATGPT"],
+    env["API_KEY_CHATGPT_1"],
+    env["API_KEY_CHATGPT_2"],
+    env["API_KEY_CHATGPT_3"],
+    env["API_KEY_CHATGPT_4"],
+    env["API_KEY_CHATGPT_5"],
+    env["API_KEY_CHATGPT_6"],
+    env["API_KEY_CHATGPT_7"],
+    env["API_KEY_CHATGPT_8"],
+    env["API_KEY_CHATGPT_9"],
+]
 bot = telebot.TeleBot(env["TG_BOT_TOKEN"])
 db_link = env["DB_LINK"]
 
@@ -79,7 +90,7 @@ def make_request(message):
         engine=engine,
         prompt=message.text,
         temperature=0.5,
-        max_tokens=3500,
+        max_tokens=3100,
     )
     list_of_answers = check_length(completion.choices[0]["text"], [])
     for piece_of_answer in list_of_answers:
@@ -124,6 +135,11 @@ def send_msg_to_chatgpt(message):
         bot.send_message(
             message.chat.id,
             "ChatGPT в данный момент перегружен запросами, пожалуйста повторите свой запрос чуть позже.",
+        )
+    except openai.error.InvalidRequestError:
+        bot.send_message(
+            message.chat.id,
+            "Максимальная длина контекста составляет около 3000 слов, ответ превысил длину контекста. Пожалуйста, повторите вопрос, либо перефразируйте его.",
         )
 
 
