@@ -1,5 +1,6 @@
 from dotenv import dotenv_values
 import openai
+import random
 import sqlite3
 import telebot
 from requests.exceptions import ReadTimeout
@@ -25,29 +26,15 @@ API_KEYS_CHATGPT = [
     env["API_KEY_CHATGPT_8"],
     env["API_KEY_CHATGPT_9"],
     env["API_KEY_CHATGPT_10"],
-    env["API_KEY_CHATGPT_11"],
-    env["API_KEY_CHATGPT_12"],
-    env["API_KEY_CHATGPT_13"],
-    env["API_KEY_CHATGPT_14"],
-    env["API_KEY_CHATGPT_15"],
-    env["API_KEY_CHATGPT_16"],
-    env["API_KEY_CHATGPT_17"],
-    env["API_KEY_CHATGPT_18"],
-    env["API_KEY_CHATGPT_19"],
-    env["API_KEY_CHATGPT_20"],
-    env["API_KEY_CHATGPT_21"],
-    env["API_KEY_CHATGPT_22"],
-    env["API_KEY_CHATGPT_23"],
-    env["API_KEY_CHATGPT_24"],
-    env["API_KEY_CHATGPT_25"],
-    env["API_KEY_CHATGPT_26"],
-    env["API_KEY_CHATGPT_27"],
-    env["API_KEY_CHATGPT_28"],
-    env["API_KEY_CHATGPT_29"],
-    env["API_KEY_CHATGPT_30"],
 ]
 bot = telebot.TeleBot(env["TG_BOT_TOKEN"])
 db_link = env["DB_LINK"]
+
+REKLAMA_MSG = [
+    "🔥 Валютный вклад для россиян (до 12% годовых) <a href='https://crypto-fans.club'>crypto-fans.club</a>",
+    "🔥 Если думаешь купить или продать криптовалюту, рекомендую <a href='https://cutt.ly/D7rsbVG'>Bybit</a>",
+    "🔥 Если думаешь купить или продать криптовалюту, рекомендую <a href='https://cutt.ly/87rsjAV'>Binance</a>",
+]
 
 
 def write_to_db(message):
@@ -110,18 +97,35 @@ def check_length(answer, list_of_answers):
 
 
 def make_request(message, api_key_numb):
+    chance = random.choices((0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
     try:
-        engine = "text-davinci-003"
-        completion = openai.Completion.create(
-            engine=engine,
-            prompt=message.text,
-            temperature=0.5,
-            max_tokens=3100,
+        # engine = "text-davinci-003"
+        engine = "gpt-3.5-turbo"
+        # engine = "gpt-4"
+        # completion = openai.Completion.create(
+        #     engine=engine,
+        #     prompt=message.text,
+        #     temperature=0.5,
+        #     max_tokens=4090,
+        # )
+        completion = openai.ChatCompletion.create(
+            model=engine, messages=[{"role": "user", "content": message.text}]
         )
-        list_of_answers = check_length(completion.choices[0]["text"], [])
+        # print(completion.choices[0]["message"])
+        list_of_answers = check_length(
+            completion.choices[0]["message"]["content"], []
+        )
+
         if list_of_answers:
             for piece_of_answer in list_of_answers:
                 bot.send_message(message.chat.id, piece_of_answer)
+            if chance == [1]:
+                bot.send_message(
+                    message.chat.id,
+                    random.choices(REKLAMA_MSG),
+                    disable_web_page_preview=True,
+                    parse_mode="HTML",
+                )
         else:
             make_request(message, api_key_numb)
     except RateLimitError:
@@ -195,12 +199,17 @@ def check_key(message):
     key = message.text[19:]
     openai.api_key = key
     try:
-        engine = "text-davinci-003"
-        completion = openai.Completion.create(
-            engine=engine,
-            prompt=message.text,
-            temperature=0.5,
-            max_tokens=1000,
+        # engine = "text-davinci-003"
+        # completion = openai.Completion.create(
+        #     engine=engine,
+        #     prompt=message.text,
+        #     temperature=0.5,
+        #     max_tokens=1000,
+        # )
+        engine = "gpt-3.5-turbo"
+        # engine = "gpt-4"
+        completion = openai.ChatCompletion.create(
+            model=engine, messages=[{"role": "user", "content": message.text}]
         )
         bot.send_message(message.chat.id, f"Ключ {key} работает.")
     except:
@@ -213,7 +222,7 @@ def send_msg_to_chatgpt(message):
         check_key(message)
         return
     api_key_numb = 0
-    openai.api_key = API_KEYS_CHATGPT[api_key_numb]
+    openai.api_key = random.choice(API_KEYS_CHATGPT)
     write_to_db(message)
     make_request(message, api_key_numb)
 
