@@ -31,7 +31,8 @@ API_KEYS_CHATGPT = [
 ]
 
 bot = Bot(token=env["TG_BOT_TOKEN"])
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 db_link = env["DB_LINK"]
 
 REKLAMA_MSG = [
