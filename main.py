@@ -114,10 +114,8 @@ async def make_request(message, api_key_numb, last_msg):
         await bot.send_chat_action(message.chat.id, "typing")
         if list_of_answers:
             for piece_of_answer in list_of_answers:
-                await bot.edit_message_text(
-                    chat_id=message.chat.id,
-                    message_id=last_msg.message_id,
-                    text=piece_of_answer,
+                await last_msg.edit_text(
+                    piece_of_answer,
                 )
             if chance == [1]:
                 await message.answer(
@@ -208,11 +206,7 @@ async def send_start(message: types.Message):
         "<code>Сообщение принято. Ждем ответа...</code>", parse_mode="HTML"
     )
     await write_to_db(message)
-    await bot.edit_message_text(
-        chat_id=message.chat.id,
-        message_id=last_msg.message_id,
-        text=text,
-    )
+    await last_msg.edit_text(text)
 
 
 @dp.message_handler(commands=["help"])
@@ -229,11 +223,7 @@ async def send_start(message: types.Message):
     )
     await write_to_db(message)
     await write_to_db(message)
-    await bot.edit_message_text(
-        chat_id=message.chat.id,
-        message_id=last_msg.message_id,
-        text=text,
-    )
+    await last_msg.edit_text(text)
 
 
 def md5sign(m, oa, secretWord1, currency, o):
@@ -277,12 +267,7 @@ async def send_donate(message: types.Message):
 
 ChatGPT bot is free, but you can always buy a cup of coffee ☕️ developers - see what they invent🙏
     """
-    await bot.edit_message_text(
-        chat_id=message.chat.id,
-        message_id=last_msg.message_id,
-        text=text,
-        reply_markup=keyboard,
-    )
+    await last_msg.edit_text(text=text, reply_markup=keyboard)
 
 
 async def check_key(message):
