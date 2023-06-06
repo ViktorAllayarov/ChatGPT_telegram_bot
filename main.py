@@ -106,9 +106,10 @@ async def make_request(message, api_key_numb, last_msg):
     await bot.send_chat_action(message.chat.id, "typing")
     try:
         engine = "gpt-3.5-turbo"
-        completion = openai.ChatCompletion.create(
+        completion = await openai.ChatCompletion.acreate(
             model=engine, messages=[{"role": "user", "content": message.text}]
         )
+
         list_of_answers = check_length(
             completion.choices[0]["message"]["content"], []
         )
