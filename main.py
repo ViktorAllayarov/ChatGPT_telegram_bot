@@ -58,7 +58,7 @@ async def write_to_db(message):
                     str(message.chat.id),
                 ),
             )
-        except:
+        except Exception as e:
             await conn.commit()
             await conn.close()
             await bot.send_message(
@@ -80,7 +80,7 @@ async def write_to_db(message):
                     message.text,
                 ),
             )
-        except:
+        except Exception as e:
             await conn.commit()
             await conn.close()
             await bot.send_message(
@@ -203,8 +203,16 @@ async def send_start(message: types.Message):
 Пожалуйста, имейте в виду, что я являюсь компьютерной программой и мои ответы не всегда могут быть точными или актуальными.
 
 Удачи! 🤖"""
+    await bot.send_chat_action(message.chat.id, "typing")
+    last_msg = await message.answer(
+        "<code>Сообщение принято. Ждем ответа...</code>", parse_mode="HTML"
+    )
     await write_to_db(message)
-    await message.answer(text)
+    await bot.edit_message_text(
+        chat_id=message.chat.id,
+        message_id=last_msg.message_id,
+        text=text,
+    )
 
 
 @dp.message_handler(commands=["help"])
@@ -215,8 +223,17 @@ async def send_start(message: types.Message):
 
 
 """
+    await bot.send_chat_action(message.chat.id, "typing")
+    last_msg = await message.answer(
+        "<code>Сообщение принято. Ждем ответа...</code>", parse_mode="HTML"
+    )
     await write_to_db(message)
-    await message.answer(text)
+    await write_to_db(message)
+    await bot.edit_message_text(
+        chat_id=message.chat.id,
+        message_id=last_msg.message_id,
+        text=text,
+    )
 
 
 def md5sign(m, oa, secretWord1, currency, o):
@@ -244,6 +261,11 @@ async def send_donate(message: types.Message):
     type = "donate"
     params = f"m={m}&oa={oa}&currency={currency}&o={o}&s={s}&lang={lang}&userid={userid}&type={type}"
 
+    await bot.send_chat_action(message.chat.id, "typing")
+    last_msg = await message.answer(
+        "<code>Сообщение принято. Ждем ответа...</code>", parse_mode="HTML"
+    )
+
     inline_btn_1 = types.InlineKeyboardButton(
         text="Угостить ☕️", url=url + params
     )
@@ -255,8 +277,10 @@ async def send_donate(message: types.Message):
 
 ChatGPT bot is free, but you can always buy a cup of coffee ☕️ developers - see what they invent🙏
     """
-    await message.reply(
-        text,
+    await bot.edit_message_text(
+        chat_id=message.chat.id,
+        message_id=last_msg.message_id,
+        text=text,
         reply_markup=keyboard,
     )
 
