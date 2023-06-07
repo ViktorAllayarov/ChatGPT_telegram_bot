@@ -101,7 +101,7 @@ def check_length(answer, list_of_answers):
 
 
 async def make_request(message, api_key_numb, last_msg):
-    chance = random.choices((0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
+    chance = random.choices((0, 1, 2, 3, 4))
     await bot.send_chat_action(message.chat.id, "typing")
     try:
         engine = "gpt-3.5-turbo"
@@ -120,7 +120,7 @@ async def make_request(message, api_key_numb, last_msg):
                 )
             if chance == [1]:
                 await message.answer(
-                    random.choices(REKLAMA_MSG),
+                    random.choices(REKLAMA_MSG)[0],
                     disable_web_page_preview=True,
                     parse_mode="HTML",
                 )
