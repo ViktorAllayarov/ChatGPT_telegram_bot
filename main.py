@@ -300,5 +300,6 @@ async def send_msg_to_chatgpt(message: types.Message):
 
 
 if __name__ == "__main__":
+    create_table()
     openai.api_key = API_KEYS_CHATGPT[0]
     executor.start_polling(dp, skip_updates=True)
