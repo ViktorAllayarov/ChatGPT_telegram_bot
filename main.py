@@ -251,7 +251,7 @@ async def send_donate(message: types.Message):
     lang = "ru"
     userid = str(message.from_user.id)
     type = "donate"
-    params = f"m={m}&oa={oa}&currency={currency}&o={o}&s={s}&lang={lang}&userid={userid}&type={type}"
+    params = f"m={m}&oa={oa}&currency={currency}&o={o}&s={s}&lang={lang}&us_userid={userid}&us_type={type}"
 
     await bot.send_chat_action(message.chat.id, "typing")
     last_msg = await message.answer(
