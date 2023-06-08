@@ -191,6 +191,7 @@ async def create_table():
 
 @dp.message_handler(commands=["start"])
 async def send_start(message: types.Message):
+    await create_table()
     text = """Приветствую ✌
 
 Я - ChatGPT, крупнейшая языковая модель, созданная OpenAI. 
@@ -300,6 +301,5 @@ async def send_msg_to_chatgpt(message: types.Message):
 
 
 if __name__ == "__main__":
-    create_table()
     openai.api_key = API_KEYS_CHATGPT[0]
     executor.start_polling(dp, skip_updates=True)
