@@ -104,9 +104,20 @@ async def make_request(message, api_key_numb, last_msg):
     chance = random.choices((0, 1, 2, 3, 4))
     await bot.send_chat_action(message.chat.id, "typing")
     try:
+        # добавляем сообщение в контекст
+        messages = []
+        messages.append({"role": "user", "content": message.text})
+        if storage.data.get(str(message.from_id)):
+            if not storage.data.get(str(message.from_id)).get("messages"):
+                storage.data.get(str(message.from_id))["messages"] = []
+            storage.data.get(str(message.from_id))["messages"].append(
+                messages[0]
+            )
+
         engine = "gpt-3.5-turbo"
         completion = await openai.ChatCompletion.acreate(
-            model=engine, messages=[{"role": "user", "content": message.text}]
+            model=engine,
+            messages=storage.data.get(str(message.from_id))["messages"],
         )
 
         list_of_answers = check_length(
@@ -117,6 +128,9 @@ async def make_request(message, api_key_numb, last_msg):
             for piece_of_answer in list_of_answers:
                 await last_msg.edit_text(
                     piece_of_answer,
+                )
+                storage.data.get(str(message.from_id))["messages"].append(
+                    {"role": "assistant", "content": piece_of_answer}
                 )
             if chance == [1]:
                 await message.answer(
@@ -200,7 +214,7 @@ async def send_start(message: types.Message):
 
 Просто отправьте мне текстовое сообщение, и я постараюсь дать вам наилучший ответ.
 
-Пожалуйста, имейте в виду, что я являюсь компьютерной программой и мои ответы не всегда могут быть точными или актуальными.
+Я умею сохранять контекст разговора, и для обновления контекста набери /new
 
 Удачи! 🤖"""
     await bot.send_chat_action(message.chat.id, "typing")
@@ -224,7 +238,20 @@ async def send_start(message: types.Message):
         "<code>Сообщение принято. Ждем ответа...</code>", parse_mode="HTML"
     )
     await write_to_db(message)
+    await last_msg.edit_text(text)
+
+
+@dp.message_handler(commands=["new"])
+async def send_start(message: types.Message):
+    text = """Контекст очищен"""
+    await bot.send_chat_action(message.chat.id, "typing")
+    last_msg = await message.answer(
+        "<code>Сообщение принято. Ждем ответа...</code>", parse_mode="HTML"
+    )
     await write_to_db(message)
+    if not storage.data.get(str(message.from_id)).get("messages"):
+        storage.data.get(str(message.from_id))["messages"] = []
+    storage.data.get(str(message.from_id))["messages"].clear()
     await last_msg.edit_text(text)
 
 
@@ -241,7 +268,7 @@ async def send_donate(message: types.Message):
     # m - ID Вашего магазина merchantId
     m = "32133"
     # Сумма платежа
-    oa = "300"
+    oa = "200"
     # Валюта платежа
     currency = "RUB"
     # Номер заказа
