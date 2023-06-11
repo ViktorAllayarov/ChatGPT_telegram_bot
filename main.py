@@ -40,6 +40,7 @@ bot = Bot(token=env["TG_BOT_TOKEN"])
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 db_link = env["DB_LINK"]
+AudioSegment.converter = env["AUDIOSEGMENT_CONVERTER"]
 
 REKLAMA_MSG = [
     "🔥 Валютный вклад для россиян (до 12% годовых) <a href='https://crypto-fans.club'>crypto-fans.club</a>",
