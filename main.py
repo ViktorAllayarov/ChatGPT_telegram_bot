@@ -11,7 +11,6 @@ from dotenv import dotenv_values
 from openai.error import InvalidRequestError, RateLimitError
 from pydub import AudioSegment
 from requests.exceptions import ReadTimeout
-
 from ya_speechkit import get_ya_voice
 
 CHECK_KEY = "check_key_lskJHjf32"
@@ -40,7 +39,7 @@ bot = Bot(token=env["TG_BOT_TOKEN"])
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 db_link = env["DB_LINK"]
-AudioSegment.converter = env["AUDIOSEGMENT_CONVERTER"]
+# AudioSegment.converter = env["AUDIOSEGMENT_CONVERTER"]
 
 REKLAMA_MSG = [
     "🔥 Валютный вклад для россиян (до 12% годовых) <a href='https://crypto-fans.club'>crypto-fans.club</a>",
@@ -142,9 +141,14 @@ async def make_request(message, api_key_numb, last_msg):
                 await last_msg.edit_text(
                     piece_of_answer,
                 )
-                filename, f = await get_ya_voice(
-                    piece_of_answer, message.voice.file_id
-                )
+                if message.voice:
+                    filename, f = await get_ya_voice(
+                        piece_of_answer, message.voice.file_id
+                    )
+                else:
+                    filename, f = await get_ya_voice(
+                        piece_of_answer, message.message_id
+                    )
                 audio = types.InputFile(filename)
                 f.close()
                 await bot.send_audio(message.chat.id, audio)
