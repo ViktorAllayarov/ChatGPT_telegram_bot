@@ -298,7 +298,7 @@ async def send_donate(message: types.Message):
     # m - ID Вашего магазина merchantId
     m = "32133"
     # Сумма платежа
-    oa = "200"
+    oa = "300"
     # Валюта платежа
     currency = "RUB"
     # Номер заказа
