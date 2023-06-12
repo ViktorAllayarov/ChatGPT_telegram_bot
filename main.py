@@ -286,7 +286,7 @@ def md5sign(m, oa, secretWord1, currency, o):
 
 @dp.message_handler(commands=["donate"])
 async def send_donate(message: types.Message):
-    secretWord1 = "Jou^VC4buX_[1x?"
+    secretWord1 = env["secretWord1"]
     url = "https://pay.freekassa.ru/?"
 
     # m - ID Вашего магазина merchantId
