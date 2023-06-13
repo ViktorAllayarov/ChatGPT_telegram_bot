@@ -141,18 +141,18 @@ async def make_request(message, api_key_numb, last_msg):
                 await last_msg.edit_text(
                     piece_of_answer,
                 )
-                if message.voice:
-                    filename, f = await get_ya_voice(
-                        piece_of_answer, message.voice.file_id
-                    )
-                else:
-                    filename, f = await get_ya_voice(
-                        piece_of_answer, message.message_id
-                    )
-                audio = types.InputFile(filename)
-                f.close()
-                await bot.send_audio(message.chat.id, audio)
-                await delete_temporary_files(filename)
+                # if message.voice:
+                #     filename, f = await get_ya_voice(
+                #         piece_of_answer, message.voice.file_id
+                #     )
+                # else:
+                #     filename, f = await get_ya_voice(
+                #         piece_of_answer, message.message_id
+                #     )
+                # audio = types.InputFile(filename)
+                # f.close()
+                # await bot.send_audio(message.chat.id, audio)
+                # await delete_temporary_files(filename)
                 storage.data.get(str(message.from_id))["messages"].append(
                     {"role": "assistant", "content": piece_of_answer}
                 )
