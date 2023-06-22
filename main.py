@@ -438,6 +438,10 @@ async def delete_temporary_files(*files):
 @dp.message_handler(content_types=["voice"])
 async def send_transcription(message: types.Message):
     api_key_numb = 0
+    is_group = False
+
+    if message.chat.type == "supergroup":
+        return
 
     await bot.send_chat_action(message.chat.id, "typing")
     last_msg = await bot.send_message(
@@ -469,7 +473,7 @@ async def send_transcription(message: types.Message):
         last_msg = await message.answer(
             "<code>Ждем ответа...</code>", parse_mode="HTML"
         )
-        await make_request(message, api_key_numb, last_msg)
+        await make_request(message, api_key_numb, last_msg, is_group)
     finally:
         audio_file.close()
         voice_path.close()
