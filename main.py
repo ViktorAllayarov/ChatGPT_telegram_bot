@@ -5,22 +5,24 @@ import random
 
 import aiosqlite
 import openai
+import tiktoken
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from dotenv import dotenv_values
 from openai.error import InvalidRequestError, RateLimitError
 from pydub import AudioSegment
 from requests.exceptions import ReadTimeout
-from ya_speechkit import get_ya_voice
 
-CHECK_KEY = "check_key_lskJHjf32"
-GET_ALL_USERS_COUNT = "get_all_users_count_lskJHjf32"
+# from ya_speechkit import get_ya_voice
+
 
 env = {
     **dotenv_values("/home/ChatGPT_telegram_bot/.env.prod"),
     **dotenv_values(".env.dev"),  # override
 }
 
+CHECK_KEY = "check_key_lskJHjf32"
+GET_ALL_USERS_COUNT = "get_all_users_count_lskJHjf32"
 API_KEYS_CHATGPT = [
     env["API_KEY_CHATGPT"],
     env["API_KEY_CHATGPT_1"],
@@ -34,17 +36,18 @@ API_KEYS_CHATGPT = [
     env["API_KEY_CHATGPT_9"],
     env["API_KEY_CHATGPT_10"],
 ]
+BOT_NAME = env["BOT_NAME"]
+REKLAMA_MSG = [
+    "🔥 Выбери валютный вклад под 12% годовых, сохрани и приумножь свой капитал.<a href='https://crypto-fans.club'>crypto-fans.club</a>",
+    "🔥 Бот ChatGPT работает бесплатно, но Вы всегда можете <a href='https://pay.freekassa.ru/?m=32133&oa=300&currency=RUB&o=1329664&s=578c86c20802cc09803d7a0e1d97169c&lang=ru&userid=612063160&type=donate'>угостить чашечкой кофе ☕️</a> разработчиков - глядишь чего полезного изобретут🙏",
+]
 
 bot = Bot(token=env["TG_BOT_TOKEN"])
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 db_link = env["DB_LINK"]
-# AudioSegment.converter = env["AUDIOSEGMENT_CONVERTER"]
-
-REKLAMA_MSG = [
-    "🔥 Выбери валютный вклад под 12% годовых, сохрани и приумножь свой капитал.<a href='https://crypto-fans.club'>crypto-fans.club</a>",
-    "🔥 Бот ChatGPT работает бесплатно, но Вы всегда можете <a href='https://pay.freekassa.ru/?m=32133&oa=300&currency=RUB&o=1329664&s=578c86c20802cc09803d7a0e1d97169c&lang=ru&userid=612063160&type=donate'>угостить чашечкой кофе ☕️</a> разработчиков - глядишь чего полезного изобретут🙏",
-]
+encoding = tiktoken.get_encoding("cl100k_base")
+encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
 
 async def write_to_db(message):
@@ -106,64 +109,108 @@ def check_length(answer, list_of_answers):
         return list_of_answers
 
 
-async def make_request(message, api_key_numb, last_msg):
+async def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301"):
+    """Returns the number of tokens used by a list of messages."""
+    try:
+        encoding = tiktoken.encoding_for_model(model)
+    except KeyError:
+        print("Warning: model not found. Using cl100k_base encoding.")
+        encoding = tiktoken.get_encoding("cl100k_base")
+    if model == "gpt-3.5-turbo":
+        print(
+            "Warning: gpt-3.5-turbo may change over time. Returning num tokens assuming gpt-3.5-turbo-0301."
+        )
+        return await num_tokens_from_messages(
+            messages, model="gpt-3.5-turbo-0301"
+        )
+    elif model == "gpt-4":
+        print(
+            "Warning: gpt-4 may change over time. Returning num tokens assuming gpt-4-0314."
+        )
+        return await num_tokens_from_messages(messages, model="gpt-4-0314")
+    elif model == "gpt-3.5-turbo-0301":
+        tokens_per_message = 4
+        tokens_per_name = -1
+    elif model == "gpt-4-0314":
+        tokens_per_message = 3
+        tokens_per_name = 1
+    else:
+        raise NotImplementedError(
+            f"""num_tokens_from_messages() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."""
+        )
+    num_tokens = 0
+    for message in messages:
+        num_tokens += tokens_per_message
+        for key, value in message.items():
+            num_tokens += len(encoding.encode(value))
+            if key == "name":
+                num_tokens += tokens_per_name
+    num_tokens += 3
+    return num_tokens
+
+
+async def make_request(message, api_key_numb, last_msg, is_group=False):
     chance = random.choices((0, 1, 2, 3, 4))
+    engine = "gpt-3.5-turbo"
+    # добавляем сообщение в контекст
+    messages = []
+    messages.append({"role": "user", "content": message.text})
     await bot.send_chat_action(message.chat.id, "typing")
     try:
-        # добавляем сообщение в контекст
-        messages = []
-        messages.append({"role": "user", "content": message.text})
-        if storage.data.get(str(message.from_id)):
-            if not storage.data.get(str(message.from_id)).get("messages"):
-                storage.data.get(str(message.from_id))["messages"] = []
-            if (
-                len(storage.data.get(str(message.from_id)).get("messages"))
-                > 100
-            ):
-                storage.data.get(str(message.from_id)).get("messages").pop(1)
-                storage.data.get(str(message.from_id)).get("messages").pop(2)
-            storage.data.get(str(message.from_id))["messages"].append(
-                messages[0]
+        # проверяем откуда пришло сообщение из чата или из группа
+        if is_group:
+            num_tokens = await num_tokens_from_messages(messages)
+            if num_tokens > 4095:
+                raise InvalidRequestError()
+            completion = await openai.ChatCompletion.acreate(
+                model=engine,
+                messages=messages,
             )
-
-        engine = "gpt-3.5-turbo"
-        completion = await openai.ChatCompletion.acreate(
-            model=engine,
-            messages=storage.data.get(str(message.from_id))["messages"],
-        )
-
-        list_of_answers = check_length(
-            completion.choices[0]["message"]["content"], []
-        )
-        await bot.send_chat_action(message.chat.id, "typing")
-        if list_of_answers:
-            for piece_of_answer in list_of_answers:
-                await last_msg.edit_text(
-                    piece_of_answer,
-                )
-                # if message.voice:
-                #     filename, f = await get_ya_voice(
-                #         piece_of_answer, message.voice.file_id
-                #     )
-                # else:
-                #     filename, f = await get_ya_voice(
-                #         piece_of_answer, message.message_id
-                #     )
-                # audio = types.InputFile(filename)
-                # f.close()
-                # await bot.send_audio(message.chat.id, audio)
-                # await delete_temporary_files(filename)
-                storage.data.get(str(message.from_id))["messages"].append(
-                    {"role": "assistant", "content": piece_of_answer}
-                )
+            await bot.send_chat_action(message.chat.id, "typing")
+            await last_msg.edit_text(
+                completion.choices[0]["message"]["content"],
+            )
             if chance == [1]:
                 await message.answer(
                     random.choices(REKLAMA_MSG)[0],
                     disable_web_page_preview=True,
                     parse_mode="HTML",
                 )
-        else:
-            await make_request(message, api_key_numb, last_msg)
+            return
+
+        if storage.data.get(str(message.from_id)):
+            if not storage.data.get(str(message.from_id)).get("messages"):
+                storage.data.get(str(message.from_id))["messages"] = []
+            storage.data.get(str(message.from_id))["messages"].append(
+                messages[0]
+            )
+            num_tokens = await num_tokens_from_messages(
+                storage.data.get(str(message.from_id))["messages"]
+            )
+            if num_tokens > 4095:
+                storage.data.get(str(message.from_id)).get("messages").pop(1)
+                storage.data.get(str(message.from_id)).get("messages").pop(1)
+        completion = await openai.ChatCompletion.acreate(
+            model=engine,
+            messages=storage.data.get(str(message.from_id))["messages"],
+        )
+        await bot.send_chat_action(message.chat.id, "typing")
+        await last_msg.edit_text(
+            completion.choices[0]["message"]["content"],
+        )
+        storage.data.get(str(message.from_id))["messages"].append(
+            {
+                "role": "assistant",
+                "content": completion.choices[0]["message"]["content"],
+            }
+        )
+        if chance == [1]:
+            await message.answer(
+                random.choices(REKLAMA_MSG)[0],
+                disable_web_page_preview=True,
+                parse_mode="HTML",
+            )
+
     except RateLimitError:
         if api_key_numb < len(API_KEYS_CHATGPT) - 1:
             api_key_numb += 1
@@ -356,6 +403,13 @@ async def get_all_users_count(message):
 @dp.message_handler(content_types=["text"])
 async def send_msg_to_chatgpt(message: types.Message):
     api_key_numb = 0
+    is_group = False
+
+    if message.chat.type == "supergroup":
+        if BOT_NAME not in message.text:
+            return
+        is_group = True
+        message.text = message.text[len(BOT_NAME) + 1 :]
 
     if CHECK_KEY == message.text[:19]:
         check_key(message)
@@ -368,7 +422,7 @@ async def send_msg_to_chatgpt(message: types.Message):
         "<code>Сообщение принято. Ждем ответа...</code>", parse_mode="HTML"
     )
     await write_to_db(message)
-    await make_request(message, api_key_numb, last_msg)
+    await make_request(message, api_key_numb, last_msg, is_group)
 
 
 async def delete_temporary_files(*files):

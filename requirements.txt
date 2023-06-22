@@ -25,7 +25,9 @@ pydub==0.25.1
 pyTelegramBotAPI==4.10.0
 python-dotenv==1.0.0
 pytz==2023.3
+regex==2023.6.3
 requests==2.31.0
+tiktoken==0.4.0
 tomli==2.0.1
 tqdm==4.65.0
 typing_extensions==4.5.0
