@@ -423,7 +423,7 @@ async def send_msg_to_chatgpt(message: types.Message):
         message.text = message.text[len(BOT_NAME) + 1 :]
 
     if CHECK_KEY == message.text[:19]:
-        check_key(message)
+        await check_key(message)
         return
     if GET_ALL_USERS_COUNT == message.text:
         await get_all_users_count(message)
