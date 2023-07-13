@@ -9,7 +9,7 @@ env = {
 folder_id = env["YA_FOLDER_ID"]
 api_key = env[
     "YA_SECRET_API_KEY"
-]  # ID ресурса Key, который принадлежит сервисному аккаунту.
+]
 url = "https://tts.api.cloud.yandex.net/speech/v1/tts:synthesize"
 headers = {"Authorization": "Api-Key " + api_key}
 
@@ -19,11 +19,9 @@ async def synthesize(text):
         "folderId": folder_id,
         "text": text,
         "lang": "ru-RU",
-        # 'voice':'alena', # премиум - жрет в 10 раз больше денег
         "voice": "jane",  # oksana
         "emotion": "evil",
         "speed": "1.0",
-        # по умолчанию конвертит в oggopus, кот никто не понимает, зато занимат мало места
         "format": "mp3",
         "sampleRateHertz": 48000,
     }

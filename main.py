@@ -27,6 +27,7 @@ API_KEYS_CHATGPT = [
     env["API_KEY_CHATGPT"],
     env["API_KEY_CHATGPT_1"],
     env["API_KEY_CHATGPT_2"],
+    env["API_KEY_CHATGPT_3"],
 ]
 BOT_NAME = env["BOT_NAME"]
 REKLAMA_MSG = [
